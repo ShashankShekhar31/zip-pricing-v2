@@ -1,237 +1,272 @@
-# Shopify App Template - React Router
+# ZIP Pricing Shopify App
 
-This is a template for building a [Shopify app](https://shopify.dev/docs/apps/getting-started) using [React Router](https://reactrouter.com/). It was forked from the [Shopify Remix app template](https://github.com/Shopify/shopify-app-template-remix) and converted to React Router.
+## Overview
 
-Rather than cloning this repo, follow the [Quick Start steps](https://github.com/Shopify/shopify-app-template-react-router#quick-start).
+ZIP Pricing Shopify App is a custom Shopify application that enables location-based product pricing using ZIP codes.
 
-Visit the [`shopify.dev` documentation](https://shopify.dev/docs/api/shopify-app-react-router) for more details on the React Router app package.
+The application allows customers to enter their ZIP code on the storefront and instantly receive pricing calculated according to predefined ZIP-specific pricing rules. The solution is implemented using Shopify App Proxy, Theme App Extensions, and a custom pricing engine.
 
-## Upgrading from Remix
+---
 
-If you have an existing Remix app that you want to upgrade to React Router, please follow the [upgrade guide](https://github.com/Shopify/shopify-app-template-react-router/wiki/Upgrading-from-Remix). Otherwise, please follow the quick start guide below.
+## Problem Statement
 
-## Quick start
+Different geographic regions may require different product pricing due to factors such as:
 
-### Prerequisites
+* Shipping costs
+* Logistics expenses
+* Regional taxes
+* Market-specific pricing strategies
 
-Before you begin, you'll need to [download and install the Shopify CLI](https://shopify.dev/docs/apps/tools/cli/getting-started) if you haven't already.
+This application demonstrates how Shopify storefront pricing can be customized dynamically based on customer ZIP codes.
 
-### Setup
+---
 
-```shell
-shopify app init --template=https://github.com/Shopify/shopify-app-template-react-router
-```
+## Features
 
-### Local Development
+### ZIP-Based Pricing Engine
 
-```shell
-shopify app dev
-```
+* Calculates product price using ZIP-specific rules.
+* Supports multiple pricing zones.
+* Easily extendable for additional ZIP codes.
 
-Press P to open the URL to your app. Once you click install, you can start development.
+### Shopify App Proxy
 
-Local development is powered by [the Shopify CLI](https://shopify.dev/docs/apps/tools/cli). It logs into your account, connects to an app, provides environment variables, updates remote config, creates a tunnel and provides commands to generate extensions.
+* Secure communication between storefront and backend.
+* Customers interact only with Shopify storefront URLs.
+* Backend logic remains protected.
 
-### Authenticating and querying data
+### Theme App Extension
 
-To authenticate and query data you can use the `shopify` const that is exported from `/app/shopify.server.js`:
+* Merchant can add the widget directly from Shopify Theme Editor.
+* No theme code modification required.
+* Easy installation and removal.
 
-```js
-export async function loader({ request }) {
-  const { admin } = await shopify.authenticate.admin(request);
+### Dynamic Price Display
 
-  const response = await admin.graphql(`
-    {
-      products(first: 25) {
-        nodes {
-          title
-          description
-        }
-      }
-    }`);
+* Customers enter ZIP code.
+* Frontend requests price from backend.
+* Price updates instantly without page reload.
 
-  const {
-    data: {
-      products: { nodes },
-    },
-  } = await response.json();
+### ZIP Validation
 
-  return nodes;
+* Prevents empty ZIP submissions.
+* Validates basic ZIP format before API requests.
+
+### Loading State
+
+* Displays loading indicator while fetching pricing information.
+* Improves user experience.
+
+### Local Storage Support
+
+* Stores customer ZIP code.
+* Automatically restores ZIP code on future visits.
+
+---
+
+# Architecture
+
+Customer
+↓
+Theme App Extension Widget
+↓
+Shopify App Proxy
+↓
+Pricing Engine
+↓
+JSON Response
+↓
+Updated Storefront Price
+
+---
+
+## Project Structure
+
+zip-pricing-v2/
+
+├── app/
+│   ├── routes/
+│   │   └── api.proxy.jsx
+│   │
+│   └── services/
+│       └── pricingEngine.js
+│
+├── extensions/
+│   └── zip-pricing-widget/
+│       └── blocks/
+│           └── zip_pricing.liquid
+│
+├── prisma/
+│
+├── shopify.app.toml
+├── package.json
+├── README.md
+
+---
+
+## Pricing Logic
+
+Current ZIP pricing rules:
+
+| ZIP Code | Region     | Price  |
+| -------- | ---------- | ------ |
+| 75028    | Texas      | $14.99 |
+| 10001    | New York   | $16.99 |
+| 90210    | California | $17.99 |
+| Others   | Default    | $19.99 |
+
+Example:
+
+Customer enters:
+
+75028
+
+Response:
+
+{
+"success": true,
+"zipCode": "75028",
+"calculatedPrice": 1499
 }
-```
 
-This template comes pre-configured with examples of:
+---
 
-1. Setting up your Shopify app in [/app/shopify.server.ts](https://github.com/Shopify/shopify-app-template-react-router/blob/main/app/shopify.server.ts)
-2. Querying data using Graphql. Please see: [/app/routes/app.\_index.tsx](https://github.com/Shopify/shopify-app-template-react-router/blob/main/app/routes/app._index.tsx).
-3. Responding to webhooks. Please see [/app/routes/webhooks.tsx](https://github.com/Shopify/shopify-app-template-react-router/blob/main/app/routes/webhooks.app.uninstalled.tsx).
-4. Using metafields, metaobjects, and declarative custom data definitions. Please see [/app/routes/app.\_index.tsx](https://github.com/Shopify/shopify-app-template-react-router/blob/main/app/routes/app._index.tsx) and [shopify.app.toml](https://github.com/Shopify/shopify-app-template-react-router/blob/main/shopify.app.toml).
+## App Proxy Endpoint
 
-Please read the [documentation for @shopify/shopify-app-react-router](https://shopify.dev/docs/api/shopify-app-react-router) to see what other API's are available.
+Configured App Proxy:
 
-## Shopify Dev MCP
+/apps/zip-pricing
 
-This template is configured with the Shopify Dev MCP. This instructs [Cursor](https://cursor.com/), [GitHub Copilot](https://github.com/features/copilot) and [Claude Code](https://claude.com/product/claude-code) and [Google Gemini CLI](https://github.com/google-gemini/gemini-cli) to use the Shopify Dev MCP.
+Example:
 
-For more information on the Shopify Dev MCP please read [the documentation](https://shopify.dev/docs/apps/build/devmcp).
+/apps/zip-pricing?zip=75028
 
-## Deployment
+Response:
 
-### Application Storage
+{
+"success": true,
+"zipCode": "75028",
+"calculatedPrice": 1499
+}
 
-This template uses [Prisma](https://www.prisma.io/) to store session data, by default using an [SQLite](https://www.sqlite.org/index.html) database.
-The database is defined as a Prisma schema in `prisma/schema.prisma`.
+---
 
-This use of SQLite works in production if your app runs as a single instance.
-The database that works best for you depends on the data your app needs and how it is queried.
-Here’s a short list of databases providers that provide a free tier to get started:
+## Theme Widget Workflow
 
-| Database   | Type             | Hosters                                                                                                                                                                                                                                    |
-| ---------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| MySQL      | SQL              | [Digital Ocean](https://www.digitalocean.com/products/managed-databases-mysql), [Planet Scale](https://planetscale.com/), [Amazon Aurora](https://aws.amazon.com/rds/aurora/), [Google Cloud SQL](https://cloud.google.com/sql/docs/mysql) |
-| PostgreSQL | SQL              | [Digital Ocean](https://www.digitalocean.com/products/managed-databases-postgresql), [Amazon Aurora](https://aws.amazon.com/rds/aurora/), [Google Cloud SQL](https://cloud.google.com/sql/docs/postgres)                                   |
-| Redis      | Key-value        | [Digital Ocean](https://www.digitalocean.com/products/managed-databases-redis), [Amazon MemoryDB](https://aws.amazon.com/memorydb/)                                                                                                        |
-| MongoDB    | NoSQL / Document | [Digital Ocean](https://www.digitalocean.com/products/managed-databases-mongodb), [MongoDB Atlas](https://www.mongodb.com/atlas/database)                                                                                                  |
+1. Customer enters ZIP code.
+2. ZIP code is validated.
+3. Request sent to App Proxy.
+4. Backend calculates price.
+5. JSON response returned.
+6. Widget displays calculated price.
+7. Product price updates dynamically.
+8. ZIP stored in Local Storage.
 
-To use one of these, you can use a different [datasource provider](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#datasource) in your `schema.prisma` file, or a different [SessionStorage adapter package](https://github.com/Shopify/shopify-api-js/blob/main/packages/shopify-api/docs/guides/session-storage.md).
+---
 
-### Build
+## Technologies Used
 
-Build the app by running the command below with the package manager of your choice:
+### Frontend
 
-Using yarn:
+* Liquid
+* JavaScript
+* HTML
+* CSS
 
-```shell
-yarn build
-```
+### Backend
 
-Using npm:
+* Node.js
+* React Router
+* Shopify App Framework
 
-```shell
-npm run build
-```
+### Shopify
 
-Using pnpm:
+* Shopify App Proxy
+* Theme App Extensions
+* Shopify CLI
 
-```shell
-pnpm run build
-```
+### Database
 
-## Hosting
+* Prisma (Shopify template)
 
-When you're ready to set up your app in production, you can follow [our deployment documentation](https://shopify.dev/docs/apps/launch/deployment) to host it externally. From there, you have a few options:
+---
 
-- [Google Cloud Run](https://shopify.dev/docs/apps/launch/deployment/deploy-to-google-cloud-run): This tutorial is written specifically for this example repo, and is compatible with the extended steps included in the subsequent [**Build your app**](tutorial) in the **Getting started** docs. It is the most detailed tutorial for taking a React Router-based Shopify app and deploying it to production. It includes configuring permissions and secrets, setting up a production database, and even hosting your apps behind a load balancer across multiple regions.
-- [Fly.io](https://fly.io/docs/js/shopify/): Leverages the Fly.io CLI to quickly launch Shopify apps to a single machine.
-- [Render](https://render.com/docs/deploy-shopify-app): This tutorial guides you through using Docker to deploy and install apps on a Dev store.
-- [Manual deployment guide](https://shopify.dev/docs/apps/launch/deployment/deploy-to-hosting-service): This resource provides general guidance on the requirements of deployment including environment variables, secrets, and persistent data.
+## Setup Instructions
 
-When you reach the step for [setting up environment variables](https://shopify.dev/docs/apps/deployment/web#set-env-vars), you also need to set the variable `NODE_ENV=production`.
+### Clone Repository
 
-## Gotchas / Troubleshooting
+git clone https://github.com/ShashankShekhar31/zip-pricing-v2
 
-### Database tables don't exist
+cd zip-pricing-v2
 
-If you get an error like:
+### Install Dependencies
 
-```
-The table `main.Session` does not exist in the current database.
-```
+npm install
 
-Create the database for Prisma. Run the `setup` script in `package.json` using `npm`, `yarn` or `pnpm`.
+### Start Development Server
 
-### Navigating/redirecting breaks an embedded app
+shopify app dev
 
-Embedded apps must maintain the user session, which can be tricky inside an iFrame. To avoid issues:
+### Open Shopify Preview
 
-1. Use `Link` from `react-router` or `@shopify/polaris`. Do not use `<a>`.
-2. Use `redirect` returned from `authenticate.admin`. Do not use `redirect` from `react-router`
-3. Use `useSubmit` from `react-router`.
+Add the Theme App Extension widget through:
 
-This only applies if your app is embedded, which it will be by default.
+Online Store
+→ Themes
+→ Customize
+→ Add Block
+→ ZIP Pricing Widget
 
-### Webhooks: shop-specific webhook subscriptions aren't updated
+---
 
-If you are registering webhooks in the `afterAuth` hook, using `shopify.registerWebhooks`, you may find that your subscriptions aren't being updated.
+## Assumptions
 
-Instead of using the `afterAuth` hook declare app-specific webhooks in the `shopify.app.toml` file. This approach is easier since Shopify will automatically sync changes every time you run `deploy` (e.g: `npm run deploy`). Please read these guides to understand more:
+* ZIP codes are predefined.
+* Pricing rules are stored in application logic.
+* Product prices are updated on the storefront for demonstration purposes.
+* Authentication and merchant configuration are handled by Shopify.
 
-1. [app-specific vs shop-specific webhooks](https://shopify.dev/docs/apps/build/webhooks/subscribe#app-specific-subscriptions)
-2. [Create a subscription tutorial](https://shopify.dev/docs/apps/build/webhooks/subscribe/get-started?deliveryMethod=https)
+---
 
-If you do need shop-specific webhooks, keep in mind that the package calls `afterAuth` in 2 scenarios:
+## Future Improvements
 
-- After installing the app
-- When an access token expires
+* Database-driven pricing rules.
+* Merchant dashboard for managing ZIP pricing.
+* Region-level pricing support.
+* Product-specific ZIP pricing.
+* Real-time shipping cost integration.
+* Analytics for ZIP-based customer behavior.
+* Geo-location auto detection.
 
-During normal development, the app won't need to re-authenticate most of the time, so shop-specific subscriptions aren't updated. To force your app to update the subscriptions, uninstall and reinstall the app. Revisiting the app will call the `afterAuth` hook.
+---
 
-### Webhooks: Admin created webhook failing HMAC validation
+## Screenshots
 
-Webhooks subscriptions created in the [Shopify admin](https://help.shopify.com/en/manual/orders/notifications/webhooks) will fail HMAC validation. This is because the webhook payload is not signed with your app's secret key.
+### Product Page Widget
 
-The recommended solution is to use [app-specific webhooks](https://shopify.dev/docs/apps/build/webhooks/subscribe#app-specific-subscriptions) defined in your toml file instead. Test your webhooks by triggering events manually in the Shopify admin(e.g. Updating the product title to trigger a `PRODUCTS_UPDATE`).
+<img width="1692" height="857" alt="Image" src="https://github.com/user-attachments/assets/bf09302d-78ac-4523-b7db-77f2c8f59ae0" />
 
-### Webhooks: Admin object undefined on webhook events triggered by the CLI
+### ZIP Price Calculation
 
-When you trigger a webhook event using the Shopify CLI, the `admin` object will be `undefined`. This is because the CLI triggers an event with a valid, but non-existent, shop. The `admin` object is only available when the webhook is triggered by a shop that has installed the app. This is expected.
+<img width="1711" height="855" alt="Image" src="https://github.com/user-attachments/assets/77a9350c-4ab7-4774-a903-063d3008cec8" />
 
-Webhooks triggered by the CLI are intended for initial experimentation testing of your webhook configuration. For more information on how to test your webhooks, see the [Shopify CLI documentation](https://shopify.dev/docs/apps/tools/cli/commands#webhook-trigger).
+---
 
-### Incorrect GraphQL Hints
+## Demo Video 
 
-By default the [graphql.vscode-graphql](https://marketplace.visualstudio.com/items?itemName=GraphQL.vscode-graphql) extension for will assume that GraphQL queries or mutations are for the [Shopify Admin API](https://shopify.dev/docs/api/admin). This is a sensible default, but it may not be true if:
+Loom Video:
+https://drive.google.com/file/d/1vmZMS3fSqhtA0KwO0P7ikrNILH0r72Z6/view?usp=drive_link
 
-1. You use another Shopify API such as the storefront API.
-2. You use a third party GraphQL API.
+---
 
-If so, please update [.graphqlrc.ts](https://github.com/Shopify/shopify-app-template-react-router/blob/main/.graphqlrc.ts).
+## GitHub Repository
 
-### Using Defer & await for streaming responses
+Repository:
+https://github.com/ShashankShekhar31/zip-pricing-v2
 
-By default the CLI uses a cloudflare tunnel. Unfortunately cloudflare tunnels wait for the Response stream to finish, then sends one chunk. This will not affect production.
+---
 
-To test [streaming using await](https://reactrouter.com/api/components/Await#await) during local development we recommend [localhost based development](https://shopify.dev/docs/apps/build/cli-for-apps/networking-options#localhost-based-development).
+## Author
 
-### "nbf" claim timestamp check failed
+Shashank Shekhar
 
-This is because a JWT token is expired. If you are consistently getting this error, it could be that the clock on your machine is not in sync with the server. To fix this ensure you have enabled "Set time and date automatically" in the "Date and Time" settings on your computer.
-
-### Using MongoDB and Prisma
-
-If you choose to use MongoDB with Prisma, there are some gotchas in Prisma's MongoDB support to be aware of. Please see the [Prisma SessionStorage README](https://www.npmjs.com/package/@shopify/shopify-app-session-storage-prisma#mongodb).
-
-### Unable to require(`C:\...\query_engine-windows.dll.node`).
-
-Unable to require(`C:\...\query_engine-windows.dll.node`).
-The Prisma engines do not seem to be compatible with your system.
-
-query_engine-windows.dll.node is not a valid Win32 application.
-
-**Fix:** Set the environment variable:
-
-```shell
-PRISMA_CLIENT_ENGINE_TYPE=binary
-```
-
-This forces Prisma to use the binary engine mode, which runs the query engine as a separate process and can work via emulation on Windows ARM64.
-
-## Resources
-
-React Router:
-
-- [React Router docs](https://reactrouter.com/home)
-
-Shopify:
-
-- [Intro to Shopify apps](https://shopify.dev/docs/apps/getting-started)
-- [Shopify App React Router docs](https://shopify.dev/docs/api/shopify-app-react-router)
-- [Shopify CLI](https://shopify.dev/docs/apps/tools/cli)
-- [Shopify App Bridge](https://shopify.dev/docs/api/app-bridge-library).
-- [Polaris Web Components](https://shopify.dev/docs/api/app-home/polaris-web-components).
-- [App extensions](https://shopify.dev/docs/apps/app-extensions/list)
-- [Shopify Functions](https://shopify.dev/docs/api/functions)
-
-Internationalization:
-
-- [Internationalizing your app](https://shopify.dev/docs/apps/best-practices/internationalization/getting-started)
