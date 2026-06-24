@@ -252,6 +252,13 @@ Online Store
 
 ---
 
+## Demo Video 
+
+Loom Video:
+https://drive.google.com/file/d/1vmZMS3fSqhtA0KwO0P7ikrNILH0r72Z6/view?usp=drive_link
+
+---
+
 ## GitHub Repository
 
 Repository:
